@@ -16,8 +16,8 @@ load_dotenv()
 PDF_DIRECTORY = "pdfs/"
 VECTORSTORE_PATH = "vectorstore/"
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-# Free reliable model on OpenRouter
-OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
+# DeepSeek R1 Reasoning model (Free)
+OPENROUTER_MODEL = "deepseek/deepseek-r1-0528:free"
 
 def get_openrouter_client():
     api_key = None
