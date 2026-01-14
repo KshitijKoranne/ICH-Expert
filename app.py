@@ -20,18 +20,29 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
 def get_openrouter_client():
-    # Try getting from environment variable first, then st.secrets
-    api_key = os.getenv("OPENROUTER_API_KEY")
-    if not api_key and "OPENROUTER_API_KEY" in st.secrets:
-        api_key = st.secrets["OPENROUTER_API_KEY"]
+    # Priority 1: Check Streamlit Secrets (for Cloud)
+    # Priority 2: Check Environment Variables (for Local)
+    api_key = None
+    try:
+        api_key = st.secrets.get("OPENROUTER_API_KEY")
+    except:
+        pass
+    
+    if not api_key:
+        api_key = os.getenv("OPENROUTER_API_KEY")
         
     if not api_key:
-        st.error("OPENROUTER_API_KEY not found. Please add it to your .env file or Streamlit Secrets.")
+        st.error("API Key Missing: Please add 'OPENROUTER_API_KEY' to your Streamlit Secrets.")
         st.stop()
         
+    key = api_key.strip()
+    if len(key) < 10:
+        st.error("API Key Invalid: The key found is too short. Please check your Secrets configuration.")
+        st.stop()
+
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
-        api_key=api_key.strip(), # Ensure no accidental whitespace
+        api_key=key,
     )
 
 def build_vector_store():
