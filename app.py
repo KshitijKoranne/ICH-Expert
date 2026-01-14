@@ -20,25 +20,30 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
 def get_openrouter_client():
-    # Priority 1: Check Streamlit Secrets (for Cloud)
-    # Priority 2: Check Environment Variables (for Local)
     api_key = None
+    
+    # 1. Check Streamlit Secrets (Priority for Cloud)
     try:
-        api_key = st.secrets.get("OPENROUTER_API_KEY")
+        if "OPENROUTER_API_KEY" in st.secrets:
+            api_key = st.secrets["OPENROUTER_API_KEY"]
     except:
         pass
-    
+        
+    # 2. Check Environment (Priority for Local)
     if not api_key:
         api_key = os.getenv("OPENROUTER_API_KEY")
         
     if not api_key:
-        st.error("API Key Missing: Please add 'OPENROUTER_API_KEY' to your Streamlit Secrets.")
-        st.stop()
+        st.sidebar.error("🔑 API Key not found in Secrets!")
+        return None
         
     key = api_key.strip()
-    if len(key) < 10:
-        st.error("API Key Invalid: The key found is too short. Please check your Secrets configuration.")
-        st.stop()
+    
+    # Visual confirmation in sidebar (safe)
+    st.sidebar.success(f"🔑 Key detected (starts with {key[:10]}...)")
+    
+    if not key.startswith("sk-or-v1-"):
+        st.sidebar.warning("⚠️ Warning: Key should typically start with 'sk-or-v1-'. Please check for typos or extra spaces.")
 
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -131,23 +136,22 @@ Answer:
     
     formatted_prompt = system_prompt.format(context=context, input=query)
 
+    if not client:
+        return "I'm sorry, I cannot answer questions without a valid API key. Please check the sidebar for details.", []
+
     try:
         completion = client.chat.completions.create(
             model=OPENROUTER_MODEL,
             messages=[
-                {"role": "system", "content": "You are a strictly honest Q&A assistant."},
+                {"role": "system", "content": "You are a strictly honest and professional ICH expert assistant."},
                 {"role": "user", "content": formatted_prompt}
             ],
             temperature=0,
             max_tokens=1024,
-            extra_headers={
-                "HTTP-Referer": "https://localhost:8501", # Optional
-                "X-Title": "PDF ICH Expert Q&A", # Optional
-            }
         )
         return completion.choices[0].message.content, docs
     except Exception as e:
-        return f"Error generating answer: {str(e)}", []
+        return f"Error connecting to expert knowledge base: {str(e)}", []
 
 def main():
     st.set_page_config(page_title="ICH Expert", layout="wide", page_icon="🧬")
