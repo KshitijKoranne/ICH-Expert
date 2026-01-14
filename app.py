@@ -38,12 +38,6 @@ def get_openrouter_client():
         return None
         
     key = api_key.strip()
-    
-    # Visual confirmation in sidebar (safe)
-    st.sidebar.success(f"🔑 Key detected (starts with {key[:10]}...)")
-    
-    if not key.startswith("sk-or-v1-"):
-        st.sidebar.warning("⚠️ Warning: Key should typically start with 'sk-or-v1-'. Please check for typos or extra spaces.")
 
     return OpenAI(
         base_url="https://openrouter.ai/api/v1",
